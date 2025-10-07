@@ -7,8 +7,8 @@
 
 import SwiftUI
 import SwiftData
+import NaturalLanguage // 👈 IMPORTANTE
 
-// View for creating a new book entry
 struct AddBook: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var context
@@ -18,60 +18,58 @@ struct AddBook: View {
     @State private var dateStarted: Date = .now
     @State private var dateFinished: Date = .now
     @State private var read: Bool = false
-    
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var review: String = "" // ✨ nuevo campo
     
     var body: some View {
         NavigationStack {
             Form {
                 TextField("Title", text: $name)
-                    TextField("Author", text: $author)
-                    
-                    Toggle("Read", isOn: $read)
+                TextField("Author", text: $author)
                 
-                    // Only show date pickers if marked as read
-                    if read {
-                        DatePicker("Date Started", selection: $dateStarted, displayedComponents: .date)
-                        DatePicker("Date Finished", selection: $dateFinished, displayedComponents: .date)
-                        
-                    }
+                TextEditor(text: $review)
+                    .frame(height: 100)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+                    .padding(.vertical, 8)
+                    .foregroundColor(.primary)
+                    .background(Color(.systemGroupedBackground))
+                    .cornerRadius(10)
+                    .overlay(Text("Write a short review...").opacity(review.isEmpty ? 0.5 : 0).padding(.leading, 5), alignment: .topLeading)
+                
+                Toggle("Read", isOn: $read)
+                
+                if read {
+                    DatePicker("Date Started", selection: $dateStarted, displayedComponents: .date)
+                    DatePicker("Date Finished", selection: $dateFinished, displayedComponents: .date)
+                }
             }
             .navigationTitle("New Book")
-            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                // Cancel button
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-                // Save button with validation
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
-                        // Validation for name and author
                         guard Book.isValidName(name), Book.isValidAuthor(author) else { return }
-                        // Create new book and insert in database
+                        
+                        // ✨ Analizar sentimiento antes de guardar
+                        let sentiment = review.isEmpty ? nil : SentimentAnalyzer.analyze(text: review)
+                        
                         let book = Book(
                             name: name,
                             author: author,
                             dateStarted: dateStarted,
                             dateFinished: dateFinished,
-                            read: read
+                            read: read,
+                            review: review,
+                            sentiment: sentiment
                         )
+                        
                         context.insert(book)
-                        do {
-                            try context.save() // Try to save
-                            dismiss()          // Close view
-                        } catch {
-                            // If error, show simple alert
-                            errorMessage = "Error saving book"
-                            showError = true
-                        }
+                        try? context.save()
+                        dismiss()
                     }
                     .disabled(!Book.isValidName(name) || !Book.isValidAuthor(author))
                 }
-            }
-            .alert(isPresented: $showError) {
-                Alert(title: Text("Failed to save book!"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
             }
         }
     }
