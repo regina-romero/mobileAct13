@@ -6,21 +6,20 @@
 //
 
 import SwiftUI
+import NaturalLanguage // Necesario para analizar el sentimiento de la reseña
 
-// View for updating an existing book
 struct UpdateBookTracker: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var context
     
     @Bindable var book: Book
     
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @State private var showError = false // Controla si se muestra una alerta de error
+    @State private var errorMessage = "" // Mensaje que aparece en la alerta
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // 📚 Matching background
                 Color(red: 0.95, green: 0.97, blue: 1.0)
                     .ignoresSafeArea()
                 
@@ -38,7 +37,7 @@ struct UpdateBookTracker: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // 📖 Book Icon Header
+                        // Encabezado con ícono del libro
                         ZStack {
                             Circle()
                                 .fill(
@@ -75,9 +74,9 @@ struct UpdateBookTracker: View {
                         .padding(.top, 20)
                         .padding(.bottom, 10)
                         
-                        // Form Fields in Cards
+                        // Campos del formulario
                         VStack(spacing: 16) {
-                            // Book Name Card
+                            // nombre del libro
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Book Name")
                                     .font(.system(size: 13, weight: .semibold))
@@ -92,13 +91,9 @@ struct UpdateBookTracker: View {
                                             .fill(Color.white.opacity(0.9))
                                             .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
                                     )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
-                                    )
                             }
                             
-                            // Author Card
+                            // autor
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Author")
                                     .font(.system(size: 13, weight: .semibold))
@@ -113,20 +108,33 @@ struct UpdateBookTracker: View {
                                             .fill(Color.white.opacity(0.9))
                                             .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
                                     )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
-                                    )
                             }
                             
-                            // Read Toggle Card
+                            //reseña
+                            Section("Review") {
+                                TextEditor(text: Binding(
+                                    get: { book.review ?? "" },
+                                    set: { newValue in
+                                        book.review = newValue
+                                        // Recalcula el sentimiento si se modifica la reseña
+                                        if !newValue.isEmpty {
+                                            book.sentiment = SentimentAnalyzer.analyze(text: newValue)
+                                        } else {
+                                            book.sentiment = nil
+                                        }
+                                    }
+                                ))
+                                .frame(height: 100)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+                            }
+                            
+                            // Marcar si el libro fue leído
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Reading Status")
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.primary)
                                     Text(book.read ? "Finished reading" : "Currently reading")
-                                        .font(.system(size: 13, weight: .regular))
+                                        .font(.system(size: 13))
                                         .foregroundColor(.secondary)
                                 }
                                 
@@ -139,78 +147,42 @@ struct UpdateBookTracker: View {
                             .padding(16)
                             .background(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.95),
-                                                Color.white.opacity(0.85)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
+                                    .fill(Color.white.opacity(0.9))
                                     .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
                             )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
-                            )
                             
-                            // Date Pickers (only if read)
+                            // si el libro fue leido, se escoge fecha de cuando empezo y cuando acabo el libro
                             if book.read {
                                 VStack(spacing: 16) {
-                                    // Date Started Card
+                                    // Fecha de inicio
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Date Started")
                                             .font(.system(size: 13, weight: .semibold))
                                             .foregroundColor(.secondary)
-                                            .padding(.leading, 4)
-                                        
                                         DatePicker("", selection: $book.dateStarted, displayedComponents: .date)
-                                            .datePickerStyle(.compact)
                                             .labelsHidden()
                                             .padding(16)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 14)
-                                                    .fill(Color.white.opacity(0.9))
-                                                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
-                                            )
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 14)
-                                                    .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
-                                            )
+                                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.9)))
                                     }
                                     
-                                    // Date Finished Card
+                                    // Fecha que termino
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Date Finished")
                                             .font(.system(size: 13, weight: .semibold))
                                             .foregroundColor(.secondary)
-                                            .padding(.leading, 4)
-                                        
                                         DatePicker("", selection: $book.dateFinished, displayedComponents: .date)
-                                            .datePickerStyle(.compact)
                                             .labelsHidden()
                                             .padding(16)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 14)
-                                                    .fill(Color.white.opacity(0.9))
-                                                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
-                                            )
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 14)
-                                                    .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
-                                            )
+                                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.9)))
                                     }
                                 }
-                                .transition(.scale.combined(with: .opacity))
                             }
                         }
                         .padding(.horizontal, 20)
                         
-                        // Action Buttons
+                        // Botones de acción
                         HStack(spacing: 12) {
-                            // Cancel Button
+                            // Botón para cancelar
                             Button {
                                 dismiss()
                             } label: {
@@ -222,18 +194,10 @@ struct UpdateBookTracker: View {
                                     .background(
                                         RoundedRectangle(cornerRadius: 14)
                                             .fill(Color.white.opacity(0.9))
-                                            .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .strokeBorder(
-                                                Color(red: 0.3, green: 0.6, blue: 0.95).opacity(0.3),
-                                                lineWidth: 1.5
-                                            )
                                     )
                             }
                             
-                            // Done Button
+                            // Botón para guardar los cambios
                             Button {
                                 do {
                                     try context.save()
@@ -259,37 +223,15 @@ struct UpdateBookTracker: View {
                                         )
                                     )
                                     .cornerRadius(14)
-                                    .shadow(color: Color.blue.opacity(0.4), radius: 12, x: 0, y: 6)
-                                    .shadow(color: Color.blue.opacity(0.2), radius: 4, x: 0, y: 2)
                             }
                         }
                         .padding(.horizontal, 20)
-                        .padding(.top, 10)
                         .padding(.bottom, 30)
                     }
                 }
             }
             .navigationTitle("Edit Book")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .onAppear {
-                // Set rounded font for navigation title
-                let appearance = UINavigationBarAppearance()
-                appearance.configureWithDefaultBackground()
-                appearance.backgroundColor = UIColor(Color(red: 0.95, green: 0.97, blue: 1.0))
-                appearance.titleTextAttributes = [
-                    .font: UIFont.systemFont(ofSize: 17, weight: .semibold, width: .standard),
-                    .foregroundColor: UIColor.label
-                ]
-                
-                if let descriptor = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.rounded) {
-                    appearance.titleTextAttributes[.font] = UIFont(descriptor: descriptor, size: 17)
-                }
-                
-                UINavigationBar.appearance().standardAppearance = appearance
-                UINavigationBar.appearance().scrollEdgeAppearance = appearance
-                UINavigationBar.appearance().compactAppearance = appearance
-            }
             .alert(isPresented: $showError) {
                 Alert(
                     title: Text("Failed to Update Book"),
@@ -297,7 +239,6 @@ struct UpdateBookTracker: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: book.read)
         }
     }
 }
