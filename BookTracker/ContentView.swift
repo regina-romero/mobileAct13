@@ -249,6 +249,12 @@ struct BookCardView: View {
                     .foregroundColor(.secondary.opacity(0.85))
                     .lineLimit(1)
                 
+                if let review = book.review, !review.isEmpty {
+                                    Text("Review: \(review)")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                
                 if let sentiment = book.sentiment {
                     HStack(spacing: 5) {
                         Image(systemName: "sparkles")

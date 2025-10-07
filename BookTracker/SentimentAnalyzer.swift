@@ -18,11 +18,11 @@ struct SentimentAnalyzer {
         
         switch score {
         case let x where x > 0.3:
-            return "😊 Positive (\(String(format: "%.2f", score)))"
+            return "😊 Positive"
         case let x where x < -0.3:
-            return "😞 Negative (\(String(format: "%.2f", score)))"
+            return "😞 Negative"
         default:
-            return "😐 Neutral (\(String(format: "%.2f", score)))"
+            return "😐 Neutral"
         }
     }
 }

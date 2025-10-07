@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import NaturalLanguage // 🧠 Necesario para SentimentAnalyzer
 
 // View for updating an existing book
 struct UpdateBookTracker: View {
@@ -117,6 +118,24 @@ struct UpdateBookTracker: View {
                                         RoundedRectangle(cornerRadius: 14)
                                             .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
                                     )
+                            }
+                            
+                            // 🟩 NUEVO: Review Section
+                            Section("Review") {
+                                TextEditor(text: Binding(
+                                    get: { book.review ?? "" },
+                                    set: { newValue in
+                                        book.review = newValue
+                                        // 🧠 Recalcular el sentimiento si se cambia la reseña
+                                        if !newValue.isEmpty {
+                                            book.sentiment = SentimentAnalyzer.analyze(text: newValue)
+                                        } else {
+                                            book.sentiment = nil
+                                        }
+                                    }
+                                ))
+                                .frame(height: 100)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
                             }
                             
                             // Read Toggle Card
