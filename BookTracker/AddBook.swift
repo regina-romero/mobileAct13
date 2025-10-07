@@ -10,23 +10,25 @@ import SwiftData
 import NaturalLanguage
 
 struct AddBook: View {
+    // Environment variables
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var context
     
+    // Form field states
     @State private var name: String = ""
     @State private var author: String = ""
     @State private var dateStarted: Date = .now
     @State private var dateFinished: Date = .now
     @State private var read: Bool = false
-    @State private var review: String = ""
+    @State private var review: String = "" // Used for sentiment analysis
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // 📚 Matching background
                 Color(red: 0.95, green: 0.97, blue: 1.0)
                     .ignoresSafeArea()
                 
+                // Gradient overlay for UI enhancement
                 LinearGradient(
                     colors: [
                         Color(red: 0.4, green: 0.7, blue: 1.0).opacity(0.15),
@@ -41,7 +43,7 @@ struct AddBook: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // 📖 Book Icon Header
+                        // Decorative book icon with glowyy effect
                         ZStack {
                             Circle()
                                 .fill(
@@ -58,6 +60,7 @@ struct AddBook: View {
                                 )
                                 .frame(width: 100, height: 100)
                             
+                            // Inner circle with gradient!
                             Circle()
                                 .fill(
                                     LinearGradient(
@@ -78,9 +81,9 @@ struct AddBook: View {
                         .padding(.top, 20)
                         .padding(.bottom, 10)
                         
-                        // Form Fields in Cards
+                        // Form fields container
                         VStack(spacing: 16) {
-                            // Book Title Card
+                            // Book Title input field
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Book Title")
                                     .font(.system(size: 13, weight: .semibold))
@@ -101,7 +104,7 @@ struct AddBook: View {
                                     )
                             }
                             
-                            // Author Card
+                            // Author input field complemented with testing
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Author")
                                     .font(.system(size: 13, weight: .semibold))
@@ -122,7 +125,7 @@ struct AddBook: View {
                                     )
                             }
                             
-                            // Review Card
+                            // Review text editor with sentiment analysis indicator
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Text("Review")
@@ -131,6 +134,7 @@ struct AddBook: View {
                                     
                                     Spacer()
                                     
+                                    // Show sentiment analysis indicator when review has text
                                     if !review.isEmpty {
                                         HStack(spacing: 4) {
                                             Image(systemName: "sparkles")
@@ -153,6 +157,7 @@ struct AddBook: View {
                                 .padding(.leading, 4)
                                 
                                 ZStack(alignment: .topLeading) {
+                                    // Placeholder text (only shown when empty)
                                     if review.isEmpty {
                                         Text("Write a short review of the book...")
                                             .font(.system(size: 16))
@@ -180,19 +185,19 @@ struct AddBook: View {
                                 )
                             }
                             
-                            // Read Toggle Card
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Reading Status")
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.primary)
+                                    // Dynamic status text based on toggle
                                     Text(read ? "Finished reading" : "Currently reading")
                                         .font(.system(size: 13, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
-                                
                                 Spacer()
                                 
+                                // Toggle switch for read status
                                 Toggle("", isOn: $read)
                                     .labelsHidden()
                                     .tint(Color(red: 0.3, green: 0.65, blue: 0.95))
@@ -217,10 +222,9 @@ struct AddBook: View {
                                     .strokeBorder(Color.white.opacity(0.6), lineWidth: 1)
                             )
                             
-                            // Date Pickers (only if read)
+                            // Date pickers that are only shown when book is marked as read
                             if read {
                                 VStack(spacing: 16) {
-                                    // Date Started Card
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Date Started")
                                             .font(.system(size: 13, weight: .semibold))
@@ -242,7 +246,7 @@ struct AddBook: View {
                                             )
                                     }
                                     
-                                    // Date Finished Card
+                                    // Date finished picker
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Date Finished")
                                             .font(.system(size: 13, weight: .semibold))
@@ -269,9 +273,9 @@ struct AddBook: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        // Action Buttons
+                        // Action buttons!!
                         HStack(spacing: 12) {
-                            // Cancel Button
+                            // Cancel button
                             Button {
                                 dismiss()
                             } label: {
@@ -294,13 +298,15 @@ struct AddBook: View {
                                     )
                             }
                             
-                            // Save Button
+                            // Save button
                             Button {
+                                // This line validates required fields
                                 guard Book.isValidName(name), Book.isValidAuthor(author) else { return }
                                 
-                                // ✨ Analizar sentimiento antes de guardar
+                                // Analyzes sentiment from review text
                                 let sentiment = review.isEmpty ? nil : SentimentAnalyzer.analyze(text: review)
                                 
+                                // Creates new book instance
                                 let book = Book(
                                     name: name,
                                     author: author,
@@ -311,6 +317,7 @@ struct AddBook: View {
                                     sentiment: sentiment
                                 )
                                 
+                                // Save to context and dismiss
                                 context.insert(book)
                                 try? context.save()
                                 dismiss()
@@ -334,6 +341,7 @@ struct AddBook: View {
                                     .shadow(color: Color.blue.opacity(0.4), radius: 12, x: 0, y: 6)
                                     .shadow(color: Color.blue.opacity(0.2), radius: 4, x: 0, y: 2)
                             }
+                            // Disable button if validation fails
                             .disabled(!Book.isValidName(name) || !Book.isValidAuthor(author))
                             .opacity((!Book.isValidName(name) || !Book.isValidAuthor(author)) ? 0.5 : 1.0)
                         }
@@ -347,7 +355,7 @@ struct AddBook: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
-                // Set rounded font for navigation title
+                // Configure rounded font for navigation title!!
                 let appearance = UINavigationBarAppearance()
                 appearance.configureWithDefaultBackground()
                 appearance.backgroundColor = UIColor(Color(red: 0.95, green: 0.97, blue: 1.0))
@@ -356,14 +364,17 @@ struct AddBook: View {
                     .foregroundColor: UIColor.label
                 ]
                 
+                // Apply rounded font design
                 if let descriptor = UIFont.systemFont(ofSize: 17, weight: .semibold).fontDescriptor.withDesign(.rounded) {
                     appearance.titleTextAttributes[.font] = UIFont(descriptor: descriptor, size: 17)
                 }
                 
+                // Apply to all navigation bar states
                 UINavigationBar.appearance().standardAppearance = appearance
                 UINavigationBar.appearance().scrollEdgeAppearance = appearance
                 UINavigationBar.appearance().compactAppearance = appearance
             }
+            // Smooth animation when toggling read status
             .animation(.spring(response: 0.4, dampingFraction: 0.75), value: read)
         }
     }
