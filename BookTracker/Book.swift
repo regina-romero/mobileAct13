@@ -16,10 +16,9 @@ class Book {
     var dateFinished: Date
     var read: Bool
     
-    // ✨ NUEVO: reseña del usuario
     var review: String?
     
-    // ✨ NUEVO: resultado del análisis ML
+    //resultado del análisis ML (sentimiento)
     var sentiment: String?
 
     init(name: String, author: String, dateStarted: Date, dateFinished: Date, read: Bool, review: String? = nil, sentiment: String? = nil) {
