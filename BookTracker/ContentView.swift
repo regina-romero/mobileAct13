@@ -9,19 +9,20 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    // Environment and state properties heree
     @Environment(\.modelContext) var context
-    @Query(sort: \Book.dateStarted) var books: [Book]
+    @Query(sort: \Book.dateStarted) var books: [Book] // This line fetches all books sorted by start date
     
-    @State private var isShowingItemSheet = false
-    @State private var bookToEdit: Book?
+    @State private var isShowingItemSheet = false // Controls Add Book sheet
+    @State private var bookToEdit: Book? // Holds the book being edited
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // 📚 Background
                 Color(red: 0.95, green: 0.97, blue: 1.0)
                     .ignoresSafeArea()
                 
+                // Gradient overlay for depth
                 LinearGradient(
                     colors: [
                         Color(red: 0.4, green: 0.7, blue: 1.0).opacity(0.15),
@@ -35,7 +36,6 @@ struct ContentView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 🌟 Custom Header (Title + Plus Button Aligned)
                     HStack {
                         Text("My Library")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
@@ -43,10 +43,12 @@ struct ContentView: View {
                         
                         Spacer()
                         
+                        // Adding book button
                         Button {
                             isShowingItemSheet = true
                         } label: {
                             ZStack {
+                                // Gradient circle background
                                 Circle()
                                     .fill(
                                         LinearGradient(
@@ -69,12 +71,12 @@ struct ContentView: View {
                         .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 22)
-                    .padding(.top, 4) // tightened top padding
-                    .padding(.bottom, 6) // reduced bottom padding
+                    .padding(.top, 4)
+                    .padding(.bottom, 6)
                     
-                    // 🧩 Main Content
                     if books.isEmpty {
                         VStack(spacing: 28) {
+                            // In this line we added decorative elements for a glowy icon
                             ZStack {
                                 Circle()
                                     .fill(
@@ -105,6 +107,7 @@ struct ContentView: View {
                                     .frame(width: 110, height: 110)
                                     .shadow(color: .blue.opacity(0.15), radius: 20, x: 0, y: 8)
                                 
+                                // Books icon
                                 Image(systemName: "books.vertical.fill")
                                     .font(.system(size: 48, weight: .medium))
                                     .foregroundStyle(
@@ -119,6 +122,7 @@ struct ContentView: View {
                                     )
                             }
                             
+                            // Empty state text
                             VStack(spacing: 10) {
                                 Text("Start Your Reading Journey")
                                     .font(.system(size: 26, weight: .bold, design: .rounded))
@@ -138,6 +142,7 @@ struct ContentView: View {
                                     .padding(.horizontal, 40)
                             }
                             
+                            // Call to action button
                             Button {
                                 isShowingItemSheet = true
                             } label: {
@@ -166,13 +171,14 @@ struct ContentView: View {
                             }
                             .padding(.top, 10)
                         }
-                        .padding(.top, 40) // less vertical space now
+                        .padding(.top, 40)
                     } else {
+                        // Books List View
                         ScrollView {
                             LazyVStack(spacing: 14) {
                                 ForEach(books) { book in
                                     Button {
-                                        bookToEdit = book
+                                        bookToEdit = book // Open edit sheet
                                     } label: {
                                         BookCardView(book: book)
                                     }
@@ -180,6 +186,7 @@ struct ContentView: View {
                                     .transition(.scale.combined(with: .opacity))
                                 }
                                 .onDelete { indexSet in
+                                    // Delete book from context
                                     for index in indexSet {
                                         context.delete(books[index])
                                     }
@@ -193,28 +200,31 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $isShowingItemSheet) {
-                AddBook()
+                AddBook() // Add new book sheet
             }
             .sheet(item: $bookToEdit) { book in
-                UpdateBookTracker(book: book)
+                UpdateBookTracker(book: book) // Edit existing book sheet
             }
             .animation(.spring(response: 0.45, dampingFraction: 0.75), value: books.count)
         }
     }
 }
 
-// 📖 Premium Book Card Component
+// Book Card Component
+// Premium card view for displaying individual book information
 struct BookCardView: View {
     let book: Book
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
+            // MARK: - Book Icon Section
             ZStack {
+                // Glow effect behind icon
                 RoundedRectangle(cornerRadius: 14)
                     .fill(book.read ? Color.green.opacity(0.08) : Color.blue.opacity(0.08))
                     .frame(width: 66, height: 66)
                     .blur(radius: 8)
-                
+
                 RoundedRectangle(cornerRadius: 14)
                     .fill(
                         LinearGradient(
@@ -234,27 +244,26 @@ struct BookCardView: View {
                     .frame(width: 62, height: 62)
                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
                 
+                // Book emoji (changes based on read status)
                 Text(book.read ? "📖" : "📚")
                     .font(.system(size: 32))
             }
             
+            // Book Details Section
             VStack(alignment: .leading, spacing: 7) {
+                // Book title
                 Text(book.name)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                     .lineLimit(2)
                 
+                // Author name
                 Text(book.author)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.secondary.opacity(0.85))
                     .lineLimit(1)
                 
-                if let review = book.review, !review.isEmpty {
-                                    Text("Review: \(review)")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
-                
+                // Sentiment badge (if review exists)
                 if let sentiment = book.sentiment {
                     HStack(spacing: 5) {
                         Image(systemName: "sparkles")
@@ -293,12 +302,14 @@ struct BookCardView: View {
             
             Spacer(minLength: 12)
             
+            // Status Badge Section
             VStack(spacing: 6) {
                 ZStack {
                     Circle()
                         .fill(book.read ? Color.green.opacity(0.15) : Color.blue.opacity(0.15))
                         .frame(width: 32, height: 32)
                     
+                    // Status icon (checkmark for read, book for reading)
                     Image(systemName: book.read ? "checkmark.seal.fill" : "book.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(
@@ -312,6 +323,7 @@ struct BookCardView: View {
                         )
                 }
                 
+                // Status text
                 Text(book.read ? "Read" : "Reading")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(book.read ? Color(red: 0.2, green: 0.65, blue: 0.4) : Color(red: 0.3, green: 0.6, blue: 0.9))
@@ -325,6 +337,7 @@ struct BookCardView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Card Background & Shadow
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(
@@ -340,6 +353,7 @@ struct BookCardView: View {
                 .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 6)
                 .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
         )
+        // Card border overlay
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(
@@ -361,4 +375,3 @@ struct BookCardView: View {
     ContentView()
         .modelContainer(for: [Book.self], inMemory: true)
 }
-
