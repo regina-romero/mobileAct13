@@ -6,64 +6,74 @@
 //
 
 import SwiftUI
+import NaturalLanguage // 🟩 Import para usar SentimentAnalyzer
 
-// View for updating an existing book
 struct UpdateBookTracker: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var context
     
-    @Bindable var book : Book
-    
-    @State private var showError = false
-    @State private var errorMessage = ""
+    @Bindable var book: Book
     
     var body: some View {
-        NavigationStack{
-            
-            
-            Form{
+        NavigationStack {
+            Form {
                 // Editable fields
                 TextField("Book Name", text: $book.name)
-                    TextField("Author", text: $book.author)
-                    
-                    Toggle("Read", isOn: $book.read)
+                TextField("Author", text: $book.author)
                 
-                    // Show dates only if read
-                    if book.read {
-                        DatePicker("Date Started", selection: $book.dateStarted, displayedComponents: .date)
-                        DatePicker("Date Finished", selection: $book.dateFinished, displayedComponents: .date)
-                    }
+                // 🟩 NUEVA SECCIÓN: Campo editable para reseña
+                Section("Review") {
+                    TextEditor(text: Binding(
+                        get: { book.review ?? "" },
+                        set: { newValue in
+                            book.review = newValue
+                            // 🧠 Recalcular el sentimiento si se cambia la reseña
+                            if !newValue.isEmpty {
+                                book.sentiment = SentimentAnalyzer.analyze(text: newValue)
+                            } else {
+                                book.sentiment = nil
+                            }
+                        }
+                    ))
+                    .frame(height: 100)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+                }
+                
+                Toggle("Read", isOn: $book.read)
+                
+                // Show dates only if read
+                if book.read {
+                    DatePicker("Date Started", selection: $book.dateStarted, displayedComponents: .date)
+                    DatePicker("Date Finished", selection: $book.dateFinished, displayedComponents: .date)
+                }
             }
-            .navigationTitle("New Book")
+            .navigationTitle("Edit Book")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar{
-                // Cancel and Done buttons
-                ToolbarItemGroup(placement: .topBarLeading){
-                    Button("Cancel"){
+            .toolbar {
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
-                ToolbarItemGroup(placement: .topBarTrailing){
-                    Button("Done"){
-
-                        do {
-                            try context.save() // Auto-saves changes via SwiftData binding
-                            dismiss()
-                        } catch {
-                            errorMessage = "Error updating book"
-                            showError = true
-                        }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button("Done") {
+                        try? context.save()
+                        dismiss()
                     }
                 }
             }
-            .alert(isPresented: $showError) {
-                Alert(title: Text("Failed to edit book!"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
-            }
         }
-            
     }
 }
 
 #Preview {
-    UpdateBookTracker(book: Book(name: "Little Women", author: "Louisa May Alcott", dateStarted: .now, dateFinished: .now, read: false))
+    UpdateBookTracker(book: Book(
+        name: "Little Women",
+        author: "Louisa May Alcott",
+        dateStarted: .now,
+        dateFinished: .now,
+        read: false,
+        review: "Beautifully written, loved the characters!",
+        sentiment: "😊 Positive"
+    ))
 }

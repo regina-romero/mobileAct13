@@ -36,6 +36,11 @@ struct ContentView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
+                            if let review = book.review, !review.isEmpty {
+                                                            Text("Review: \(review)")
+                                                                .font(.caption)
+                                                                .foregroundColor(.gray)
+                                                        }
                         }
                         
                         Spacer()
